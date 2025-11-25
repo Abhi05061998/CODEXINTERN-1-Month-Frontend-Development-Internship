@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>React Router App</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						fontFamily: {
+							sans: ["Inter", "sans-serif"],
+						},
+					},
+				},
+			};
+		</script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+		<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/react-router-dom/5.3.4/react-router-dom.min.js"></script>
+	</head>
+	<body class="bg-gray-50 min-h-screen p-4 md:p-8 font-sans">
+		<div id="root" class="max-w-4xl mx-auto"></div>
+		<script type="text/babel">
+			window.onload = function () {
+				if (typeof ReactRouterDOM === "undefined") {
+					document.getElementById("root").innerHTML =
+						"<div class='p-4 text-xl text-red-700 bg-red-100 rounded-lg'>🚨 Error: Failed to load React Router DOM library. Please check your internet connection or CDN links.</div>";
+					return;
+				}
+
+				const { HashRouter, Switch, Route, Link } = ReactRouterDOM;
+
+				const Home = () => (
+					<div className="p-6 bg-white shadow-xl rounded-xl border border-blue-100 transition-all duration-300 hover:shadow-2xl">
+						<h2 className="text-3xl font-bold text-blue-600 mb-3 flex items-center">
+							<span className="text-4xl mr-3">🏠</span> Welcome To The React
+							Router App
+						</h2>
+						<p className="text-gray-600">This is the Homepage.</p>
+					</div>
+				);
+
+				const About = () => (
+					<div className="p-6 bg-white shadow-xl rounded-xl border border-green-100 transition-all duration-300 hover:shadow-2xl">
+						<h2 className="text-3xl font-bold text-green-600 mb-3 flex items-center">
+							<span className="text-4xl mr-3">ℹ️</span> About Me
+						</h2>
+						<p className="text-gray-600 leading-relaxed">
+							I am Abhisek Chatterjee from Kolkata. I am learning Full Stack Web
+							Development, including HTML, CSS, JavaScript, Tailwind CSS,
+							React.js, Node.js, Ejs, PostgreSQL, and MongoDB. I'm focusing on
+							building modern, responsive applications.
+						</p>
+					</div>
+				);
+
+				const Contact = () => (
+					<div className="p-6 bg-white shadow-xl rounded-xl border border-yellow-100 transition-all duration-300 hover:shadow-2xl">
+						<h2 className="text-3xl font-bold text-yellow-600 mb-3 flex items-center">
+							<span className="text-4xl mr-3">📞</span> Contact Details
+						</h2>
+						<p className="text-gray-600 mb-4">
+							You can reach me via phone or email for any web development
+							inquiries. I'm always open to discussing new projects!
+						</p>
+						<div className="space-y-3">
+							<p className="text-gray-600">
+								<span className="font-semibold text-gray-800 mr-2">Phone:</span>
+								<span className="font-mono bg-gray-100 px-3 py-1 rounded-lg border border-gray-200">
+									6294937356
+								</span>
+							</p>
+							<p className="text-gray-600">
+								<span className="font-semibold text-gray-800 mr-2">Email:</span>
+								<span className="font-mono bg-gray-100 px-3 py-1 rounded-lg border border-gray-200">
+									abhisekchatterjee16@gmail.com
+								</span>
+							</p>
+						</div>
+					</div>
+				);
+
+				const App = () => {
+					return (
+						<React.StrictMode>
+							<nav className="bg-gray-800 p-4 shadow-2xl flex space-x-4 sm:space-x-6 rounded-xl mb-6">
+								<Link
+									to="/"
+									className="text-white font-semibold hover:bg-blue-600 transition duration-200 px-4 py-2 rounded-lg text-sm sm:text-base"
+								>
+									Home
+								</Link>
+								<Link
+									to="/about"
+									className="text-white font-semibold hover:bg-blue-600 transition duration-200 px-4 py-2 rounded-lg text-sm sm:text-base"
+								>
+									About
+								</Link>
+								<Link
+									to="/contact"
+									className="text-white font-semibold hover:bg-blue-600 transition duration-200 px-4 py-2 rounded-lg text-sm sm:text-base"
+								>
+									Contact
+								</Link>
+							</nav>
+
+							<div className="mt-5">
+								<Switch>
+									<Route exact path="/" component={Home} />
+									<Route path="/about" component={About} />
+									<Route path="/contact" component={Contact} />
+								</Switch>
+							</div>
+						</React.StrictMode>
+					);
+				};
+				const rootElement = document.getElementById("root");
+				ReactDOM.createRoot(rootElement).render(
+					<HashRouter>
+						<App />
+					</HashRouter>
+				);
+			};
+		</script>
+	</body>
+</html>

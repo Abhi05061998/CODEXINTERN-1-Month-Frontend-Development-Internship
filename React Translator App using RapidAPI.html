@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>React Translator</title>
+
+		<script src="https://cdn.tailwindcss.com"></script>
+
+		<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+		<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+		<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+	</head>
+	<body>
+		<div id="root">
+			<div style="text-align: center; padding: 50px">
+				Loading React Translator App...
+			</div>
+		</div>
+
+		<script type="text/babel">
+			const { useState } = React;
+			const apiKey = "";
+
+			const LANGUAGES = [
+				{ code: "hi", name: "Hindi" },
+				{ code: "bn", name: "Bengali" },
+				{ code: "es", name: "Spanish" },
+				{ code: "fr", name: "French" },
+				{ code: "de", name: "German" },
+				{ code: "ja", name: "Japanese" },
+				{ code: "pt", name: "Portuguese" },
+				{ code: "ko", name: "Korean" },
+			];
+
+			const fetchWithRetry = async (url, options, maxRetries = 3) => {
+				let lastError = null;
+				for (let i = 0; i < maxRetries; i++) {
+					try {
+						const response = await fetch(url, options);
+						if (!response.ok) {
+							const errorBody = await response.text();
+							throw new Error(
+								`HTTP error! Status: ${
+									response.status
+								}. Body: ${errorBody.substring(0, 100)}...`
+							);
+						}
+						return response;
+					} catch (error) {
+						lastError = error;
+						console.error(`Attempt ${i + 1} failed:`, error.message);
+						if (i < maxRetries - 1) {
+							const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+							await new Promise((resolve) => setTimeout(resolve, delay));
+						}
+					}
+				}
+				throw new Error(
+					`Fetch failed after ${maxRetries} attempts: ${lastError.message}`
+				);
+			};
+
+			const App = () => {
+				const [inputText, setInputText] = useState("");
+				const [translatedText, setTranslatedText] = useState("");
+				const [targetLanguage, setTargetLanguage] = useState(LANGUAGES[0].name);
+				const [isLoading, setIsLoading] = useState(false);
+				const [error, setError] = useState(null);
+
+				const translateText = async () => {
+					if (!inputText.trim()) {
+						setError("Please enter text to translate.");
+						return;
+					}
+
+					setIsLoading(true);
+					setError(null);
+					setTranslatedText("");
+
+					try {
+						const RAPID_API_KEY = "YOUR_API-KEY";
+						const RAPID_API_HOST = "google-translate113.p.rapidapi.com";
+						const RAPID_API_BASE_PATH = "/api/v1/translator/text";
+
+						const targetCode =
+							LANGUAGES.find((l) => l.name === targetLanguage)?.code || "es";
+						const host = RAPID_API_HOST.replace(/\/+$/, "");
+						const path = RAPID_API_BASE_PATH.replace(/^\/+/, "");
+
+						const RAPID_API_URL = `https://${host}/${path}`;
+
+						const data = {
+							from: "auto",
+							to: targetCode,
+							text: inputText,
+						};
+
+						const rapidApiOptions = {
+							method: "POST",
+							headers: {
+								"content-type": "application/json",
+								"X-RapidAPI-Key": RAPID_API_KEY,
+								"X-RapidAPI-Host": RAPID_API_HOST,
+							},
+							body: JSON.stringify(data),
+						};
+
+						const response = await fetchWithRetry(
+							RAPID_API_URL,
+							rapidApiOptions
+						);
+						const result = await response.json();
+						console.log("RAW API RESPONSE:", result);
+						const text = result?.trans || "";
+						if (text) {
+							setTranslatedText(text.trim());
+						} else {
+							setError(
+								`Translation successful, but couldn't find the translated text in the response. Status: 200. Please check the browser console for the 'RAW API RESPONSE:' object and correct the 'text' extraction path.`
+							);
+						}
+					} catch (e) {
+						console.error("RapidAPI Call Error:", e);
+						if (e.message.includes("404")) {
+							setError(
+								`Configuration Error (404 Not Found): The API endpoint URL (${RAPID_API_URL}) is incorrect.`
+							);
+						} else if (e.message.includes("403") || e.message.includes("401")) {
+							setError(
+								`Authorization Error: The 'RAPID_API_KEY' is either incorrect or your subscription is inactive.`
+							);
+						} else if (e.message.includes("400")) {
+							setError(
+								`Request Body Error (400 Bad Request): The JSON body structure is rejected. Consult your API's documentation.`
+							);
+						} else {
+							setError(`An unexpected network error occurred: ${e.message}.`);
+						}
+					} finally {
+						setIsLoading(false);
+					}
+				};
+				return (
+					<div className="min-h-screen bg-gray-50 p-4 md:p-8 flex justify-center items-start font-sans">
+						<div className="w-full max-w-4xl bg-white p-6 md:p-10 rounded-2xl shadow-2xl">
+							<header className="mb-8 text-center">
+								<h1 className="4xl font-extrabold text-indigo-700 tracking-tight">
+									RapidAPI Text Translator
+								</h1>
+								<p className="text-gray-500 mt-2">
+									Translate English text instantly using a RapidAPI endpoint.
+								</p>
+							</header>
+
+							<div className="grid grid-cols-1 gap-6">
+								<div className="flex flex-col md:flex-row items-stretch md:items-end gap-4 mb-4">
+									<div className="flex-grow">
+										<label
+											htmlFor="language-select"
+											className="block text-sm font-medium text-gray-700 mb-1"
+										>
+											Target Language
+										</label>
+										<div className="relative">
+											<select
+												id="language-select"
+												value={targetLanguage}
+												onChange={(e) => setTargetLanguage(e.target.value)}
+												className="appearance-none block w-full bg-gray-50 border border-gray-300 rounded-xl py-3 px-4 pr-10 text-base text-gray-800 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 shadow-sm"
+											>
+												{LANGUAGES.map((lang) => (
+													<option key={lang.code} value={lang.name}>
+														{lang.name}
+													</option>
+												))}
+											</select>
+											<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+												<svg
+													className="h-5 w-5"
+													xmlns="http://www.w3.org/2000/svg"
+													viewBox="0 0 20 20"
+													fill="currentColor"
+												>
+													<path
+														fillRule="evenodd"
+														d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+														clipRule="evenodd"
+													/>
+												</svg>
+											</div>
+										</div>
+									</div>
+									<button
+										onClick={translateText}
+										disabled={isLoading}
+										className={`w-full md:w-auto flex justify-center items-center px-8 py-3 rounded-xl text-white font-semibold transition duration-300 shadow-md ${
+											isLoading
+												? "bg-indigo-400 cursor-not-allowed"
+												: "bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50"
+										}`}
+									>
+										{isLoading ? (
+											<svg
+												className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+											>
+												<circle
+													className="opacity-25"
+													cx="12"
+													cy="12"
+													r="10"
+													stroke="currentColor"
+													strokeWidth="4"
+												></circle>
+												<path
+													className="opacity-75"
+													fill="currentColor"
+													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+												></path>
+											</svg>
+										) : (
+											"Translate Text"
+										)}
+									</button>
+								</div>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+									<div className="flex flex-col">
+										<label
+											htmlFor="input-text"
+											className="block text-lg font-semibold text-gray-800 mb-2"
+										>
+											English Input
+										</label>
+										<textarea
+											id="input-text"
+											rows="8"
+											value={inputText}
+											onChange={(e) => setInputText(e.target.value)}
+											placeholder="Enter the text you want to translate here..."
+											className="w-full p-4 border border-gray-300 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 text-gray-800 resize-none shadow-inner"
+										></textarea>
+									</div>
+
+									<div className="flex flex-col">
+										<label
+											htmlFor="output-text"
+											className="block text-lg font-semibold text-gray-800 mb-2"
+										>
+											{targetLanguage} Output
+										</label>
+										<div
+											id="output-text"
+											className="w-full h-full p-4 border border-gray-300 bg-indigo-50 rounded-xl text-gray-800 text-base shadow-inner overflow-y-auto"
+											style={{ minHeight: "12rem" }}
+										>
+											{translatedText || (
+												<p className="text-gray-500 italic">
+													{isLoading
+														? "Translation in progress..."
+														: "Your translated text will appear here."}
+												</p>
+											)}
+										</div>
+									</div>
+								</div>
+								{error && (
+									<div
+										className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mt-4"
+										role="alert"
+									>
+										<strong className="font-bold">Error: </strong>
+										<span className="block sm:inline">{error}</span>
+									</div>
+								)}
+							</div>
+						</div>
+					</div>
+				);
+			};
+			ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+		</script>
+	</body>
+</html>
